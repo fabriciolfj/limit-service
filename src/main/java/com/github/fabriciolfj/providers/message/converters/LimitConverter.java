@@ -11,7 +11,6 @@ public class LimitConverter {
     public static LimitEntity toEntity(final AccountLimitWithdrawMessage message) {
         return new LimitEntity(message.getAccount(), message.getBalance());
     }
-
     public static OverdraftMessage toOverdraft(final LimitEntity entity) {
         return OverdraftMessage
                 .builder()
