@@ -8,10 +8,13 @@ import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Outgoing;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.time.Duration;
 
@@ -20,18 +23,21 @@ import java.time.Duration;
 @RequiredArgsConstructor
 public class ProviderListenerLimitWithdraw {
 
-    private final FindLimit findLimit;
+    @Inject
+    private FindLimit findLimit;
+
+    @Channel("overdraft")
+    private Emitter<OverdraftMessage> emitter;
 
     @Transactional
     @Incoming("limit-withdraw")
-    @Outgoing("overdraft")
-    public OverdraftMessage consumer(final AccountLimitWithdrawMessage message) {
+    //@Outgoing("overdraft")
+    public void consumer(final AccountLimitWithdrawMessage message) {
         log.info("Message received: {}", message.toString());
-        return findLimit.execute(LimitConverter.toEntity(message))
+        findLimit.execute(LimitConverter.toEntity(message))
                 .map(e -> {
                     log.info("Limit created: {}", e);
                     return LimitConverter.toOverdraft(e);
-                }).await()
-                .atMost(Duration.ofMinutes(4));
+                }).map(overdraft -> emitter.send(overdraft));
     }
 }
