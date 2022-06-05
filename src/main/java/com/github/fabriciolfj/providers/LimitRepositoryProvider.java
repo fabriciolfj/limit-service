@@ -30,6 +30,12 @@ public class LimitRepositoryProvider implements ProviderQueryLimit {
     public Uni<LimitEntity> get(final String account) {
         return LimitData.find("account", account)
                 .firstResultOptional()
-                .map(data -> LimitDataConverter.toEntity((LimitData) data.get()));
+                .map(data -> {
+                    if (data.isPresent()) {
+                        return LimitDataConverter.toEntity((LimitData) data.get());
+                    }
+
+                    throw new RuntimeException("Account not found: " + account);
+                });
     }
 }
