@@ -1,20 +1,26 @@
 package com.github.fabriciolfj.entrypoint.controller;
 
+import com.github.fabriciolfj.business.usecase.QueryLimit;
+import com.github.fabriciolfj.entrypoint.converters.LimitResponseConverter;
 import com.github.fabriciolfj.entrypoint.dto.AccountOverdraftRequest;
 import com.github.fabriciolfj.entrypoint.dto.AccountOverdraftResponse;
+import com.github.fabriciolfj.entrypoint.dto.LimitResponse;
 import io.smallrye.mutiny.Uni;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-import javax.ws.rs.Consumes;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.math.BigDecimal;
 
 @Path("/api/v1/limits")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
+@RequiredArgsConstructor
+@Slf4j
 public class LimitControler {
+
+    private final QueryLimit queryLimit;
 
     @PUT
     @Path("/overdraft")
@@ -24,4 +30,13 @@ public class LimitControler {
                 .overdraft(request.getBalance().multiply(BigDecimal.valueOf(2)))
                 .build());
     }
+
+    @GET
+    @Path("{id}")
+    public LimitResponse findLimit(@PathParam("id") final String account) {
+        log.info("Query limit: {}", account);
+        var entity = queryLimit.execute(account);
+        return LimitResponseConverter.toResponse(entity);
+    }
+
 }
