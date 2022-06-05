@@ -2,7 +2,6 @@ package com.github.fabriciolfj.providers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.fabriciolfj.business.ProviderQueryLimit;
 import com.github.fabriciolfj.business.ProviderSaveLimit;
 import com.github.fabriciolfj.entity.LimitEntity;
 import io.quarkus.redis.client.RedisClient;
@@ -12,16 +11,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.enterprise.context.ApplicationScoped;
-import java.time.Duration;
 import java.util.Arrays;
 
 @Slf4j
 @ApplicationScoped
 @RequiredArgsConstructor
-public class LimiteCacheProvider implements ProviderSaveLimit, ProviderQueryLimit {
+public class LimiteCacheProvider implements ProviderSaveLimit {
 
     private final RedisClient redisClient;
     private final ObjectMapper objectMapper;
+    private final LimitRepositoryProvider repositoryProvider;
 
     @Override
     public Uni<LimitEntity> save(final LimitEntity entity) {
@@ -32,18 +31,7 @@ public class LimiteCacheProvider implements ProviderSaveLimit, ProviderQueryLimi
                 .flatMap(value -> {
                     redisClient.set(Arrays.asList(entity.getAccount(), value));
                     return Uni.createFrom().item(entity);
-                });
-    }
-
-    @Override
-    public LimitEntity get(String account) {
-        return Uni.createFrom()
-                .item(account)
-                .onItem()
-                .transform(v -> {
-                    var json = redisClient.get(account);
-                    return getLimitEntity(json);
-                }).await().atMost(Duration.ofMinutes(1));
+                }).flatMap(ent -> repositoryProvider.save(entity));
     }
 
     private LimitEntity getLimitEntity(Response json) {

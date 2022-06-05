@@ -1,12 +1,15 @@
 package com.github.fabriciolfj.entity;
 
-import lombok.Getter;
+import lombok.*;
 
 import java.math.BigDecimal;
 
 @Getter
+@ToString
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LimitEntity {
-
     private String account;
     private int withdrawal;
     private BigDecimal rate;
