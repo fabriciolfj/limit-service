@@ -35,7 +35,6 @@ public class LimitControler {
     @Path("{id}")
     public Uni<LimitResponse> findLimit(@PathParam("id") final String account) {
         log.info("Query limit: {}", account);
-        var entity = queryLimit.execute(account);
         return queryLimit.execute(account)
                 .map(e -> LimitResponseConverter.toResponse(e));
     }
